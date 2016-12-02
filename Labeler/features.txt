@@ -1,0 +1,61 @@
+Overall:
+holiday = ["2016-4-30","2016-5-1","2016-5-2","2016-5-7""2016-5-8"]
+workday = ["2016-4-29","2016-5-3","2016-5-4","2016-5-5","2016-5-6","2016-5-9","2016-5-10","2016-5-11"]
+=============================================
+Put in classifiers(svm or randomforest)
+Features:
+# of records in holiday (where distance != 0)
+# of records in workday (where distance != 0) (strong)
+mean distance in holiday. (strong)
+mean distance in workday.(strong)
+variance distance in workday
+mean fuel everyday
+variance fuel everyday.(strong)
+mean time of charges in holiday
+mean time of charges in workday
+# of stops > 10min in holiday
+# of stops > 10min in workday.(strong)
+# of stops < 10min in holiday.(strong)
+# of stops < 10min in workday.(strong)
+max horizontal span in holiday.(strong)
+max vertical span in holiday.(strong)
+max horizontal span in workday
+max vertical span in workday
+largest horizontal span in workday within 2(or 1~1.5, more strict) sigma space of Normal distribution (97.7% confidence interval (or 68%)).(strong)
+largest vertical span in workday within 2(or 1~1.5 more strict) sigma space of Normal distribution (97.7% confidence interval (or 68%))
+
+Some other candidates:
+avg charge time
+avg stop time
+avg stop time when stop time>10min
+ratio max workday span/max holiday span
+
+
+normalization:
+column-wise Min-max normalization (to 0-1)
+
+outlier or noise:
+treat as a record but revise value as attribute mean
+==============================================
+Put in CNN:
+objective: identify shape of trajectory only. Whether the trajectory is curve, straight, simple or complex
+record: each vin each day as a input matrix
+---------input standardization:-----------------
+    normalize each record according to the vin's all largest dimension span in workdays within 2 sigma space (feature above)
+    Eliminate all outliers out of convidence interval
+    for each gps point:
+        matrix[discretized gps] += 0.1
+    for each stop or charging point:
+        matrix[discretized gps] = 1
+--------network training: ----------------------
+for each input, if it's a map in workday, train it 3 times.
+total number of input map: # of vin * # of day/vin = approximately (50+40) * (5+8*3) = 2610
+--------network structure:----------------------
+Input matrix: 24*24, padding = 0
+convolution layer1: input channel = 1, output channel = 3, kernel = 5*5, output dimension = 20*20; trainables = 75
+pooling layer2: input channel = 3, output channel = 3, window = 2, stride = 2, mean pooling, output dimension = 10*10;
+convolution layer3: input channel = 3, output channel = 6, kernel = 5*5, output dimension = 6*6; trainables = 150
+pooling layer4: input channel = 6, output channel = 6, window = 2, stride = 2, mean pooling, output dimension = 3*3;
+fully connected layer5: input dimension=6*3*3=54 ; output dimension=28 ; sigmoid; trainables = 1540
+output layer6: input dimension=28 ; output dimension = 1; softmax; trainables = 56
+-------------------------------------------------
